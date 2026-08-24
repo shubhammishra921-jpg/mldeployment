@@ -12,11 +12,13 @@ app = FastAPI()
 model = joblib.load("mymodel.pkl")
 
 # 3. Input Data Schema (Apne features ke hisab se fields change kar sakte ho)
+from pydantic import BaseModel
+
+# Input schema ko apne actual inputs se match karein
 class InputData(BaseModel):
-    # Example fields — inhe apne model ke actual features se replace karein:
-    feature1: float
-    feature2: float
-    feature3: float
+    Name: str
+    Age: int
+    Address: str
 
 # 4. Database Connection Setup
 DB_HOST = os.getenv('Host', '').strip()
