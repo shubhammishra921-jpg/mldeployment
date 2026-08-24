@@ -7,14 +7,12 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-# 1. Model Load
+# 1. Load Model
 model = joblib.load("mymodel.pkl")
 
-# 2. Input Schema
+# 2. Schema (Exact match with training feature)
 class InputData(BaseModel):
-    Name: str
-    Age: int
-    Address: str
+    StudyHours: float
 
 # 3. Database Connection
 DB_HOST = os.getenv('Host', '').strip()
@@ -40,15 +38,15 @@ def home():
 @app.post("/predict")
 def predict(data: InputData):
     try:
-        # Convert Pydantic model to DataFrame
+        # Pydantic to DataFrame
         input_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
         input_df = pd.DataFrame([input_dict])
         
-        # 1. Prediction Execution
+        # Prediction
         prediction = model.predict(input_df)
         result = float(prediction[0])
 
-        # 2. DB Insert (Safely handled)
+        # Save to DB (optional/safe check)
         try:
             conn = get_db_connection()
             with conn.cursor() as cursor:
@@ -57,10 +55,9 @@ def predict(data: InputData):
                 conn.commit()
             conn.close()
         except Exception as db_err:
-            print(f"DB Error: {db_err}")  # Ignore DB error so API doesn't fail
+            print(f"DB Insert Error: {db_err}")
 
         return {"status": "success", "prediction": result}
 
     except Exception as e:
-        # Exact Error Browser Screen par dikhane ke liye:
-        raise HTTPException(status_code=400, detail=f"Model Prediction Error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Prediction Error: {str(e)}")
