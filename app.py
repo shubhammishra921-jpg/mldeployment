@@ -1,41 +1,18 @@
-document.getElementById('predictForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const hours = parseFloat(document.getElementById('studyHours').value);
-    const resultBox = document.getElementById('resultBox');
-    
-    resultBox.style.display = 'block';
-    resultBox.className = 'result';
-    resultBox.style.backgroundColor = '#e2e3e5';
-    resultBox.style.color = '#383d41';
-    resultBox.innerText = 'Predicting...';
-    
-    try {
-        const response = await fetch('/predict-web', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `StudyHours=${hours}`
-        });
-        const data = await response.json();
-        
-        if(data.status === 'success') {
-            // Prediction array ya single number dono format ko handle karne ke liye
-            let predVal = Array.isArray(data.prediction) ? data.prediction[0] : data.prediction;
-            predVal = Number(predVal);
+import streamlit as st
 
-            // Conditional Check for Pass / Fail
-            if (predVal >= 1) {
-                resultBox.className = 'result pass-badge';
-                resultBox.innerText = 'Result: PASS 🎉';
-            } else {
-                resultBox.className = 'result fail-badge';
-                resultBox.innerText = 'Result: FAIL ❌';
-            }
-        } else {
-            resultBox.className = 'result fail-badge';
-            resultBox.innerText = 'Error making prediction';
-        }
-    } catch (err) {
-        resultBox.className = 'result fail-badge';
-        resultBox.innerText = 'Server Error!';
-    }
-});
+st.set_page_config(page_title="Study Hours Predictor", page_icon="📚", layout="centered")
+
+st.title("📚 Study Hours Pass/Fail Predictor")
+st.write("Enter the number of hours studied to predict the exam result.")
+
+# User input slider
+hours = st.slider("Select Study Hours:", min_value=0.0, max_value=15.0, value=4.0, step=0.5)
+
+# Simple prediction logic (passing threshold is 5 hours)
+pass_threshold = 5.0
+
+if st.button("Predict Result"):
+    if hours >= pass_threshold:
+        st.success(f"🎉 **PASS!** Studying for {hours} hours is enough.")
+    else:
+        st.error(f"⚠️ **FAIL!** Studying for {hours} hours is too low. Aim for 5+ hours.")
