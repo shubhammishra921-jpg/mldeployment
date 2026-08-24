@@ -1,6 +1,7 @@
 fastapi
 uvicorn
+pymysql
 joblib
 pandas
-pymysql
 scikit-learn
+python-multipart
