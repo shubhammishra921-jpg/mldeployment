@@ -1,7 +1,11 @@
 import os
 import pymysql
+from fastapi import FastAPI
 
-# .strip() removes hidden spaces or '\n' newline characters automatically
+# 1. FastAPI App Initialize Karo (Ye line Uvicorn ke liye zaroori hai!)
+app = FastAPI()
+
+# 2. Database Connection Logic (Aapka working code)
 DB_HOST = os.getenv('Host', '').strip()
 DB_USER = os.getenv('User', '').strip()
 DB_PASSWORD = os.getenv('Password', '').strip()
@@ -23,3 +27,8 @@ try:
 except Exception as e:
     print(f"--- DB CONNECTION FAILED: {e} ---")
     raise e
+
+# 3. Simple Test Route
+@app.get("/")
+def home():
+    return {"message": "Database Connected & API is Live!"}
