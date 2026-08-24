@@ -1,25 +1,23 @@
 import os
 import pymysql
 
-# 1. Render Environment Variables (Case-sensitive!)
-DB_HOST = os.getenv('Host')
-DB_USER = os.getenv('User')
-DB_PASSWORD = os.getenv('Password')
-DB_NAME = os.getenv('Database_name')
-DB_PORT = os.getenv('Port')
+# .strip() removes hidden spaces or '\n' newline characters automatically
+DB_HOST = os.getenv('Host', '').strip()
+DB_USER = os.getenv('User', '').strip()
+DB_PASSWORD = os.getenv('Password', '').strip()
+DB_NAME = os.getenv('Database_name', '').strip()
+DB_PORT = os.getenv('Port', '27728').strip()
 
-# 2. Debug Log: Ye Render log mein print hoga taaki check kar sakein ki value aa rahi hai ya nahi
-print(f"--- DB CONNECTING TO: {DB_HOST} ON PORT: {DB_PORT} ---")
+print(f"--- DB CONNECTING TO: {DB_HOST} ON PORT: {DB_PORT} AS USER: {DB_USER} ---")
 
-# 3. MySQL Connection Block
 try:
     connection = pymysql.connect(
         host=DB_HOST,
         user=DB_USER,
         password=DB_PASSWORD,
         database=DB_NAME,
-        port=int(DB_PORT) if DB_PORT else 27728,  # Port integer hona zaroori hai
-        ssl={'ssl': {}}  # Aiven database ke liye SSL mandatory hai
+        port=int(DB_PORT),
+        ssl={'ssl': {}}
     )
     print("--- DB CONNECTION SUCCESSFUL! ---")
 except Exception as e:
