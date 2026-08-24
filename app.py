@@ -2,22 +2,21 @@ import os
 import pymysql
 import joblib
 import pandas as pd
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# 1. FastAPI App Initialize
 app = FastAPI()
 
-# 2. ML Model Load
+# 1. Model Load
 model = joblib.load("mymodel.pkl")
 
-# 3. Input Data Schema
+# 2. Input Schema
 class InputData(BaseModel):
     Name: str
     Age: int
     Address: str
 
-# 4. Database Connection Setup
+# 3. Database Connection
 DB_HOST = os.getenv('Host', '').strip()
 DB_USER = os.getenv('User', '').strip()
 DB_PASSWORD = os.getenv('Password', '').strip()
@@ -34,31 +33,34 @@ def get_db_connection():
         ssl={'ssl': {}}
     )
 
-# 5. Home Route
 @app.get("/")
 def home():
     return {"message": "Database Connected & API is Live!"}
 
-# 6. ML Prediction Endpoint
 @app.post("/predict")
 def predict(data: InputData):
-    # Pydantic dict conversion (v2 support)
-    input_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
-    input_df = pd.DataFrame([input_dict])
-    
-    # Model Prediction
-    prediction = model.predict(input_df)
-    result = float(prediction[0])
-    
-    # Save Prediction to DB
     try:
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            sql = "INSERT INTO predictions (prediction_value) VALUES (%s)"
-            cursor.execute(sql, (result,))
-            conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"DB Insert Error: {e}")
+        # Convert Pydantic model to DataFrame
+        input_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
+        input_df = pd.DataFrame([input_dict])
+        
+        # 1. Prediction Execution
+        prediction = model.predict(input_df)
+        result = float(prediction[0])
 
-    return {"prediction": result}
+        # 2. DB Insert (Safely handled)
+        try:
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                sql = "INSERT INTO predictions (prediction_value) VALUES (%s)"
+                cursor.execute(sql, (result,))
+                conn.commit()
+            conn.close()
+        except Exception as db_err:
+            print(f"DB Error: {db_err}")  # Ignore DB error so API doesn't fail
+
+        return {"status": "success", "prediction": result}
+
+    except Exception as e:
+        # Exact Error Browser Screen par dikhane ke liye:
+        raise HTTPException(status_code=400, detail=f"Model Prediction Error: {str(e)}")
